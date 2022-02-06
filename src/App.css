@@ -1,3 +1,22 @@
+@font-face {
+    font-family: 'dongle-light';
+    src: url('/public/font/dongle/Dongle-Light.ttf') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'jua';
+    src: url('/public/font/jua/Jua-Regular.ttf') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+*{
+    font-family: jua;
+    font-size: 20px;
+}
+
 .App {
   text-align: center;
 }
@@ -72,14 +91,42 @@ html{
 
 }
 
+
+.big_title{
+    font-size:2em;
+    padding: 50px 0px;
+}
+
+.skill_img{
+    width:200px;
+    margin: 30px 0px;
+}
+
+.skill_line{
+    width: 380px;
+    height: 370px;
+    box-shadow: 0px 0px 5px #d0d0d0;
+    border-radius: 5px;
+    background: #ffffff30;
+    padding: 20px 0px;
+    margin: 0px 13px 37px 13px;
+    min-width: 252px;
+    display: inline-block;
+    vertical-align: bottom;
+}
+
 .server_info{
     position: fixed;
     top: 20px;
     left: 20px;
     line-height: 41px;
     font-size: 28px;
-
-
+    z-index: 100;
+    box-shadow: 0px 0px 5px #d0d0d0;
+    padding: 15px;
+    border-radius: 5px;
+    background: #ffffff50;
+    cursor: pointer;
 }
 
 
@@ -89,10 +136,10 @@ html{
 
 .user_form {
     position: relative;
-    width: 700px;
-    height: 400px;
-    margin: 130px auto 0px auto;
-    border-radius: 10px;
+    width: 100%;
+    height: 500px;
+    text-align: center;
+    margin : 0px 0px 100px 0px;
     background: linear-gradient(165deg, rgba(158, 174, 169, 0.5), rgba(173, 157, 132, 0.3));
     transition: all linear 0.4s;
     -o-transition: all linear 0.4s;
@@ -102,7 +149,11 @@ html{
 }
 
 
-
+.line{
+    width: 50%;
+    height: 100%;
+    margin: auto;
+}
 
 .user_form:hover{
     background: linear-gradient(165deg, rgba(121, 179, 161, 0.5), rgba(180, 150, 100, 0.3));
@@ -116,25 +167,29 @@ html{
     width: 100px;
     height: 140px;
     border-radius: 50%;
-    position: absolute;
-    left: 76px;
-    top: 30px;         
 }
 
 
 .user_info {
-    position: absolute;
-    left: 200px;
-    top: 30px;
+    text-align: left;
     font-size: 17px;
-    width: 455px;
+    width: 100%;
     height: 150px;
     transition: all linear 0.4s;
     -o-transition: all linear 0.4s;
     -moz-transition: all linear 0.4s;
     opacity:0;
+    padding : 0px 25px;
 }
 
+
+.univ_info tr{
+    border-bottom: 1px solid #fafafa30;
+}
+
+.univ_info th{
+    border-bottom: 1px solid #d0d0d0;
+}
 
 
 .user_info_ul li {
@@ -145,16 +200,14 @@ html{
 
 
 .univ_info{
-    position: absolute;
-    left: 41px;
-    bottom: 54px;
+    width: 667px;
     border-spacing: 0;
     border-collapse: collapse;
-    width: 600px;
     transition: all linear 0.4s;
     -o-transition: all linear 0.4s;
     -moz-transition: all linear 0.4s;
     opacity: 0;
+    margin: auto;
 }
 
 
@@ -176,16 +229,17 @@ html{
 
 .user_career {
     position: relative;
-    width: 700px;
+    width: 100%;
     height: 500px;
-    margin: 130px auto 100px auto;
-    border-radius: 10px;
+    margin: 0px auto 100px auto;
+    text-align: center;
     background: linear-gradient(165deg, rgba(158, 174, 169, 0.5), rgba(173, 157, 132, 0.3));
     transition: all linear 0.4s;
     -o-transition: all linear 0.4s;
     -moz-transition: all linear 0.4s;
     opacity:0;
     cursor:pointer;
+    padding:50px 0px;
 }
 
 
@@ -194,9 +248,7 @@ html{
 }
 
 .user_career_info{
-    position: relative;
-    left: 16px;
-    top: 20px;
+    padding:60px 0px;
     border-spacing: 0;
     border-collapse: collapse;
     width: 667px;
@@ -204,6 +256,7 @@ html{
     -o-transition: all linear 0.4s;
     -moz-transition: all linear 0.4s;
     opacity:0;
+    display: inline-block;
 }
 
 
@@ -235,6 +288,10 @@ html{
  
 }
 
+
+.user_career_info tr{
+    border-bottom: 1px solid #fafafa50;
+}
 
 .user_career_reason_ul {
     list-style: none;
@@ -269,10 +326,10 @@ html{
 
 .user_career_2 {
     position: relative;
-    width: 700px;
-    height: 500px;
-    margin: 130px auto 100px auto;
-    border-radius: 10px;
+    width: 100%;
+    margin: 100px auto 100px auto;
+    padding: 10px 0px 50px 0px;
+    text-align: center;
     background: linear-gradient(165deg, rgba(158, 174, 169, 0.5), rgba(173, 157, 132, 0.3));
     transition: all linear 0.4s;
     -o-transition: all linear 0.4s;
@@ -306,7 +363,6 @@ html{
   
     font-size: 17px;
     width: 100%;
-    height: 150px;
     transition: all linear 0.4s;
     -o-transition: all linear 0.4s;
     -moz-transition: all linear 0.4s;
@@ -332,11 +388,12 @@ html{
 .user_career_reason_ul_2 {
     list-style: none;
     padding:0px;
+    margin: 0px;
 }
 
 
 .user_career_reason_ul_2 li {
-    padding: 2px 0px;
+    padding: 2px 25px;
     line-height: 26px;
 }
 
@@ -421,6 +478,49 @@ html{
 
 
 
+/********************  작업물 *****************************/
+
+.portfolio_list {
+    position: relative;
+    width: 100%;
+    min-height: 500px;
+    margin: 0px auto 100px auto;
+    text-align: center;
+    background: linear-gradient(165deg, rgba(158, 174, 169, 0.5), rgba(173, 157, 132, 0.3));
+    transition: all linear 0.4s;
+    -o-transition: all linear 0.4s;
+    -moz-transition: all linear 0.4s;
+    opacity:0;
+    cursor:pointer;
+    padding:30px 0px;
+}
+
+
+.portfolio_list:hover{
+    background: linear-gradient(165deg, rgba(121, 179, 161, 0.5), rgba(180, 150, 100, 0.3));
+}
+
+
+
+.portfolio_block{
+    width:55%;
+    min-width:1100px;
+    min-height:500px;
+    background:#ffffffaa;
+    display:inline-block;
+    border-radius: 5px;
+    display:flex;
+    margin: 100px auto 30px auto;
+}
+
+
+
+/**************** slick **************************/
+
+.slick-dots{
+    bottom:30px !important;
+}
+
 /***************** 채팅 **************************/
 
 .chat{
@@ -445,7 +545,7 @@ html{
     margin: auto;
     
     border-radius: 5px;
-    height: 334px;
+    height: 355px;
     padding: 8px 8px;
     overflow: auto;
 
@@ -543,7 +643,7 @@ html{
     -ms-user-select: none;
     user-select: none;
     border: 1px solid transparent;
-    padding: .375rem .75rem;
+    padding: 5px 5px;
     font-size: 1rem;
     line-height: 1.3;
     border-radius: .25rem;
@@ -552,6 +652,7 @@ html{
     background-color: #007bff;
     border-color: #007bff;
     margin-bottom: 2px;
+    margin-left:8px;
 }
 
 
@@ -563,7 +664,7 @@ html{
 .msg{
    padding:5px 11px 15px 11px;
    text-align: left;
-
+   font-size:0.8em;
 }
 
 .nickname{
@@ -582,4 +683,68 @@ html{
     position:absolute;
 
 
+}
+
+
+
+
+
+
+
+
+
+
+/************  슬라이드 *******************/
+
+
+.slide_div{
+   width:400px;
+   height: 100%;
+   display:inline-block;
+   margin:30px 50px;
+}
+
+.vertical .slick-slider{
+   width:400px;
+}
+
+
+.horizontal .slick-slider{
+   width:calc(100% - 100px);
+}
+
+
+.slick-slider img{
+    margin: auto;
+    width: 100%;
+}
+
+.slide_exp_div{
+    width:100%;
+    padding:50px 40px;
+}
+
+
+.slide_exp_line{
+    display:flex;
+    margin:0px 0px 40px 0px;
+}
+
+.slide_exp_line div{
+    width:100%;
+    text-align:left;
+}
+
+
+
+
+.slide_exp_title{
+    font-size:1.2em;
+    color:#0067a3;
+    margin:0px 0px 8px 0px;
+}
+
+
+.slide_exp_word{
+    
 }

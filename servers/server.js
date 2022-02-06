@@ -9,40 +9,45 @@ const mysql = require("mysql"); // mysql 모듈 사용
 
 
 
-
-var db = mysql.createConnection({
-	host: 'portfolio.ceet7aliyhfo.ap-northeast-2.rds.amazonaws.com',
-	port: 3306,
-	user: 'kim',
-	password: 'dkdlfjsl',
-	database: 'portfolio',
-	connectionLimit: 20
-});
-
-
-
+var db;
 
 function handleDisconnect() { 
+	/*
   db.connect(function(err) {            
     if(err) {                            
       console.log('error when connecting to db:', err);
       setTimeout(handleDisconnect, 2000); 
     }                                   
-  });                                 
-                                         
+  });                            
+	*/
+	
+	db = mysql.createConnection({
+		host: 'portfolio.ceet7aliyhfo.ap-northeast-2.rds.amazonaws.com',
+		port: 3306,
+		user: 'kim',
+		password: 'dkdlfjsl',
+		database: 'portfolio',
+		connectionLimit: 20
+	});
+	
+	
+	
   db.on('error', function(err) {
     console.log('db error', err);
     if(err.code === 'PROTOCOL_CONNECTION_LOST') { 
       return handleDisconnect();                      
-    } else {                                    
-      throw err;                               
     }
+    else if(err.code === 'PROTOCOL_ENQUEUE_AFTER_FATAL_ERROR'){
+      return handleDisconnect();       	
+    }
+    else {                                    
+      throw err;                               
+    }   
   });
 }
 
+
 handleDisconnect();
-
-
 
 
 app.use(cors());
@@ -70,33 +75,64 @@ const io = require('socket.io')(http, {
 
 var chat_num = 0;
 
+db.query('select * from chat_num', function (err, rows, fields) {
+
+	if(err){
+		console.log(err);
+	}else{
+		if(rows.length > 0){
+			chat_num = rows[0].chat_num != "" ? rows[0].chat_num : 0;
+		
+		}
+	}
+});
+
 
 io.on('connection', (socket) => {
 
 
 	socket.on('disconnect', () => {
-		console.log('user disconnected' + socket.id);
-		console.log("disconnect");
 
-		if(chat_num != 0){
-			chat_num = chat_num - 1;
-		}
-		console.log("disconnect :"+chat_num);
+		
+		db.query('select * from chat_num', function (err, rows, fields) {
 
-
-		db.query('update chat_num set chat_num = ?', [chat_num], function (err, rows, fields) {
-
-			if (err) {
+			if(err){
 				console.log(err);
-			}
-			else {
-				console.log("disconnect_update :"+chat_num);
-				io.to("admin").emit('chat_num_update', chat_num);
-				
-			}
+			}else{
+				if(rows.length > 0){ 
+					
+					
+					console.log('user disconnected' + socket.id);
+					console.log("disconnect");
+					
+					var chat_num = rows[0].chat_num;
 
-
+					if(chat_num != 0){
+						chat_num = chat_num - 1;
+					}
+					console.log("disconnect :"+chat_num);
+					
+					
+					
+					db.query('update chat_num set chat_num = ?', [chat_num], function (err, rows1, fields) {
+					
+						if (err) {
+							console.log(err);
+						}
+						else {
+							console.log("disconnect_update :"+chat_num);
+							io.to("admin").emit('chat_num_update', chat_num);
+							
+						}
+					});
+					
+					
+				}
+			}
 		});
+
+
+
 
 	});
 
@@ -105,29 +141,8 @@ io.on('connection', (socket) => {
 	/////////////////// 채팅방을 떠날때 //////////////////////
 
 	socket.on('leaveRoom', (to, id) => {
-		socket.leave(to, () => {
-
-	console.log("leaveRoom");
-			chat_num = chat_num - 1;
-
-			console.log("leave :"+chat_num);
-
-
-			db.query('update chat_num set chat_num = ?', [chat_num], function (err, rows, fields) {
-
-				if (err) {
-					console.log(err);
-				}
-				else {
-					io.to(to).emit('leaveRoom', to, id, chat_num);
-				}
-
-
-			});
-
-
-
-		});
+		console.log("leaveRoom");
+		socket.leave(to);
 	});
 
 
@@ -139,33 +154,12 @@ io.on('connection', (socket) => {
 
 	socket.on('joinRoom', (to, id) => {
 		
+		console.log("joinRoom"+to);
+				console.log(chat_num);
+		
 		socket.join(to, () => {
-				console.log("joinRoom");
-			while (chat_flag) {
-				chat_flag = chat(id).flag;
-				id = chat(id).id;
-			}
-
-
-			chat_num = chat_num + 1;
-
-			console.log("join :"+chat_num);
-
-
-			db.query('update chat_num set chat_num = ?', [chat_num], function (err, rows, fields) {
-
-				if (err) {
-					console.log(err);
-				}
-				else {
-					if(rows.length > 0){
-						io.to(to).emit('joinRoom', to, id, chat_num);
-					}
-				}
-
-
-			});
-
+			
+			
 		});
 	});
 
@@ -178,24 +172,50 @@ io.on('connection', (socket) => {
 	socket.on('chat_num_update', (to, chat_num) => {
 		
 		console.log("chat_num_update");
-			db.query('select * from chat_num', function (err, rows, fields) {
+		
+				/*
+			while (chat_flag) {
+				chat_flag = chat(id).flag;
+				id = chat(id).id;
+			}
+				*/
+				
+					
+				
+			db.query('select * from chat_num', function (err, rows1, fields) {
 
 				if(err){
 					console.log(err);
 				}else{
-					
-					if(rows.length > 0){
-
-						var chat_num = rows[0].chat_num != "" ? rows[0].chat_num : 0;
-						io.to(to).emit('chat_num_update', chat_num);
-					
+					if(rows1.length > 0){
+						chat_num = rows1[0].chat_num;
+						console.log(chat_num+" 1번");
+						chat_num = chat_num + 1;
+						
+							db.query('update chat_num set chat_num = ?', [chat_num], function (err, rows2, fields) {
+								if (err) {
+									console.log(err);
+								}
+								else {
+									db.query('select * from chat_num', function (err, rows3, fields) {
+				
+										if(err){
+											console.log(err);
+										}else{
+											if(rows3.length > 0){
+												chat_num = rows3[0].chat_num != "" ? rows3[0].chat_num : 0;
+												
+												console.log(chat_num+" 2번");
+												io.to(to).emit('chat_num_update', chat_num);
+											}
+										}
+									});
+								}
+							});
 					}
-
 				}
-
-
-
 			});
+
 
 	});
 
@@ -225,13 +245,14 @@ io.on('connection', (socket) => {
 				
 			}
 			else {
-				io.to(item.to).emit('chat message', item.to, item.id, item.msg, msgtime, item.machine);
+				//io.to(item.to).emit('chat message', item.to, item.id, item.msg, msgtime, item.machine);
 				
 				db.query('select * from chat', function (err, rows, fields) {
 					if (err) {
 						console.log(err);
 					}
 					else {
+					    console.log("sended"+item.to);
 						io.to(item.to).emit('chat message', rows);
 					}
 				});

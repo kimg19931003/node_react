@@ -1,36 +1,34 @@
 import React, { useEffect }  from 'react';
 import io from "socket.io-client"; 
-import axios from 'axios';
-//import {Helmet,  HelmetProvider} from "react-helmet-async";
-//import useScript from './hooks/useScript';
+
+import { createStore } from 'redux';
+import { Provider } from 'react-redux'
+import store from './store'
+
 import appendScript from './scriptadd/appendScript';
+import Slider from "react-slick";
+import chat_init from './chat/chat_init';
+import id_create from './chat/id_create';
+import { BrowserRouter as Router, Route } from "react-router-dom";
+import Lightbox from 'react-image-lightbox';
+
+
+import 'react-image-lightbox/style.css';
 import './App.css';
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 
 
-function id_ran(){
-      var arr = new Array('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','w','y','z');
-      var num_arr = new Array('1','2','3','4','5','6','7','8','9','0');
-      var id_temp = "손님";
-
-      for(var i=0; i<4; i++){
-        var ran = Math.floor(Math.random()*10);
-        id_temp = id_temp + arr[ran];
-      }
-
-      for(var i=0; i<4; i++){
-        var ran = Math.floor(Math.random()*10);
-        id_temp = id_temp + num_arr[ran]; 
-      }
- 
-    return id_temp;     
-}
+/*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*/
 
 const socket = io.connect("http://3.36.172.8:3001");  //백엔드 서버 포트를3001와 socket연결 
-const state = "0";
-var chat_num;
-const id = id_ran();
-const to = "admin";
 
+
+const images = [
+    process.env.PUBLIC_URL+'/img/matchup/1.png',
+    process.env.PUBLIC_URL+'/img/matchup/2.png',
+    process.env.PUBLIC_URL+'/img/matchup/3.png',
+];
 
 
 class App extends React.Component {
@@ -39,15 +37,20 @@ class App extends React.Component {
         super(props);
         this.state = {
             rows:[],
-            id: null,
+            chat_num:0,
+            id: id_create(),
             msg: null,
-            to : null,
-            state : null,
-            machine : null
+            to : 'admin',
+            state : 0,
+            machine : null,
+            init : 0,
+            photoIndex: 0,
+            isOpen: false
         };
         
         console.log("cons");
-         
+        
+    
         
     }
     
@@ -72,21 +75,21 @@ class App extends React.Component {
 
         } else {        
             socket.emit("chat message", {		//"send message"라는 이벤트 발생 (1)
-                id: id,
+                id: this.state.id,
                 msg: document.querySelector('.chat_text').value,
-                to : to,
-                state : state,
+                to : this.state.to,
+                state : this.state.state,
                 machine : machine
             });
             document.querySelector('.chat_text').value = '';
             
-            console.log(to);
+            console.log(this.state.to);
             
             this.setState({
-                id: id,
+                id: this.state.id,
                 msg: document.querySelector('.chat_text').value,
-                to : to,
-                state : state,
+                to : this.state.to,
+                state : this.state.state,
                 machine : machine
             });
 
@@ -114,21 +117,21 @@ class App extends React.Component {
     
             } else {        
                 socket.emit("chat message", {		//"send message"라는 이벤트 발생 (1)
-                    id: id,
+                    id: this.state.id,
                     msg: document.querySelector('.chat_text').value,
-                    to : to,
-                    state : state,
+                    to : this.state.to,
+                    state : this.state.state,
                     machine : machine
                 });
                 document.querySelector('.chat_text').value = '';
                 
-                console.log(to);
+                console.log(this.state.to);
                 
                 this.setState({
-                    id: id,
+                    id: this.state.id,
                     msg: document.querySelector('.chat_text').value,
-                    to : to,
-                    state : state,
+                    to : this.state.to,
+                    state : this.state.state,
                     machine : machine
                 });
     
@@ -148,15 +151,12 @@ class App extends React.Component {
       .then(data => this.setState({rows:data.rows}) );
       
       
-      socket.emit('joinRoom', to, id);
-      socket.emit('chat_num_update', function(to, chat_num){});
+    socket.emit('joinRoom', this.state.to, this.state.id);
+    socket.emit('chat_num_update', this.state.to, this.state.chat_num);
       
-      document.querySelector(".chat_space").scrollTop = document.querySelector(".chat_space").scrollHeight;
-            
+
      
       socket.on('chat message',(rows)=>{
-        let date = new Date();
-        
         this.setState({rows:rows});
 
         //document.querySelector('.chat_space_ul').append("<li><div className='msg'>"+msg+"</div><div className='nickname'>"+id+"</div><div className='time'>"+msgtime+"</div></li>");
@@ -164,40 +164,42 @@ class App extends React.Component {
     
       });
       
-      
-      socket.on('leaveRoom', function(to, id, chat_num){
 
-        this.chat_num = chat_num;
 
-        document.querySelector(".chat_num").innerHTML = this.chat_num;
+      socket.on('leaveRoom', (to, id, chat_num) => {
+          console.log("app_leaveroom");
+          this.setState({chat_num:chat_num});
 
       });
 
-      socket.on('joinRoom', function(to, id, chat_num){
-
-         this.chat_num = chat_num;
-
-         document.querySelector(".chat_num").innerHTML = this.chat_num;
+      socket.on('joinRoom', (to, id, chat_num) => {
+          console.log("app_joinroom");
+          this.setState({chat_num:chat_num});
 
       });
       
       
-     socket.on('chat_num_update', function(chat_num){
+       socket.on('chat_num_update', (chat_num) => {
+          console.log("app_chat_num_date");
+          this.setState({chat_num:chat_num});
+       });
 
-        this.chat_num = chat_num;
-        document.querySelector(".chat_num").innerHTML = this.chat_num;
-
-     });
-        
 
   
-        //appendScript("js/jquery.js");
-        //appendScript("js/jquery-ui.js");
-        appendScript("js/portfolio.js");
-        appendScript("js/socket_io.js");
-       // appendScript("js/chatting.js");
-      
+       appendScript("js/draggable.js");
+       appendScript("js/portfolio.js");
+       appendScript("js/socket_io.js");
+
+       
         console.log("didmount");
+        
+    }
+    
+    
+    
+    
+    componentWillMount(){
+        
         
     }
     
@@ -206,213 +208,157 @@ class App extends React.Component {
   render() {
       
     console.log("render");
-      
-      const {rows} = this.state;
     
- 
-      const chat_html = () => {
-          var result = [];
-        for(var i=0; i<rows.length; i++){
-          result.push(<li key={i}><div className="msg">{rows[i].msg}</div><div className="nickname">{rows[i].id}</div><div className="time">{rows[i].msgtime}</div></li>);
-        }
-        return result;
-      }
-                   
-
-        
       
+    const {rows, photoIndex, isOpen} = this.state;
+    
+    const settings = {
+        dots: true,
+        infinite: false,
+        arrow:false,
+        speed: 500,
+        slidesToShow: 1,
+        slidesToScroll: 1
+    };
+    
+    
+
+    
     return (
         <div className="App">
         
             <div className="server_info">
-                <div>Server : NODE.JS</div>
+                <div>OS : Ubuntu</div>
+                <div>Server : NODEJS</div>
                 <div>Client : REACT</div>
                 <div>Cloud : AWS EC2</div>
                 <div>DB : AWS RDS</div>
+                <div>IDE : AWS Cloud9</div>
             </div>
 
 
             <div className="user_form">
-
-                <div className="photo"></div>
-
-                <div className="user_info">
-                    <ul className="user_info_ul">
-                        <li>나이 : 30</li>
-                        <li>주소 : 부산 북구 화명 양달로 80-11 102동 1401호</li>
-                        <li>e-mail : sasaa3865@naver.com</li>
-                        <li>휴대폰 : 010 - 7615 - 3865</li>
-                    </ul>
-                </div>
-
-
-                <table className="univ_info">
-                    <thead>
-                      <tr>
-                        <th>재학기간</th> 
-                        <th>상태</th>
-                        <th>학교명</th>
-                        <th>전공</th>
-                        <th>학점</th>
-                      </tr>
-                    </thead>
+            
+            
+                <div className="line">
+                
+                    <div className="big_title">kim's portfolio</div>
+                
+                    <div style={{display:"flex", padding: "50px 0px"}}>
         
-                    <tbody>
-                        <tr>
-                            <td>2012.03 ~ 2018.02</td>
-                            <td>졸업</td>
-                            <td>동의대학교</td>
-                            <td>정보통신공학과</td>
-                            <td>3.72/4.5</td>
-                        </tr>
-        
-                        <tr>
-                            <td>2009.02 ~ 2012.02</td>
-                            <td>졸업</td>
-                            <td>낙동고등학교</td>
-                            <td>이과</td>
-                            <td>-</td>
-                        </tr>
-                    </tbody>
-        
-                </table>
-        
-            </div>
-        
-        
-        
-            <div className="user_career">
-        
-                <table className="user_career_info">
-        
-                    <colgroup>
-                        <col width="27%" />
-                        <col width="20%" />
-                        <col width="20%" />
-                        <col width="20%" />
-                        <col width="13%" />
-                    </colgroup>
-        
-        
-        
-                    <thead>
-                      <tr>
-                        <th>근무기간</th>
-                        <th>회사명</th>
-                        <th>소재지</th>
-                        <th>직종</th>
-                        <th>연봉</th>
-                      </tr>
-                    </thead>
-        
-                    <tbody>
-                        <tr>
-                            <td>2018.06 ~ 2019.07</td>
-                            <td>슈퍼셀<br/>(영상제작 업체)</td>
-                            <td>해운대</td>
-                            <td>개발팀(팀원)</td>
-                            <td>2280(만)</td>
-                        </tr>
-
-                       
-                    </tbody>
-                </table>
-        
-        
-        
-                <div className="user_career_reason">
-                    <ul className="user_career_reason_ul">
-                        <li>기술스택 : NODEJS, PHP , HTML, CSS, JS(jquery) )</li>
+                        <div className="user_info">
+                            <div className="user_info_ul">
+                                <div style={{display:"flex"}}>
+                                    <div style={{width:"100%"}}>
+                                        <div>Age</div>
+                                        <div>30</div>
+                                    </div>
+                                    <div style={{margin:"0px 0px 30px 30px", width:"100%"}}>
+                                        <div>Addr</div>
+                                        <div>부산 북구 화명 양달로 80-11 102동 1401호</div>
+                                    </div>
+                                </div>
+                                 
+                                <div style={{display:"flex"}}>
+                                    <div style={{width:"100%"}}>
+                                        <div>E-mail</div>
+                                        <div>sasaa3865@naver.com</div>
+                                    </div>
+                                    <div style={{margin:"0px 0px 30px 30px", width:"100%"}}>
+                                        <div>Phone</div>
+                                        <div>010 - 7615 - 3865</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     
-                        <li className="user_career_reason_li">
-                           
-        
-                            <div className="user_career_reason_div">
-                                
-                                해운대구 센텀시티에 위치한 슈퍼셀(영상제작회사) 에서 회사 대표 홈페이지를 제작하고<br/>
-                                카페24, 그누보드(php) 등의 플랫폼 쇼핑몰에 기능을 수정하여 <br/>
-                                디자인 변경, 기능추가 등의 작업을 하였습니다.<br/>
-        
-                            
-                            </div>
-        
-        
-                            <div className="user_career_reason_div">
-                                
-        
-                            
-                            </div>
-        
-        
-                        </li>
-                    </ul>
+                    </div>
+    
+    
+
+                
                 </div>
+                
+                
         
             </div>
         
-        
+   
         
             <div className="user_career_2">
         
-                <table className="user_career_info_2">
-        
-                    <colgroup>
-                        <col width="27%" />
-                        <col width="20%" />
-                        <col width="20%" />
-                        <col width="20%" />
-                        <col width="13%" />
-                    </colgroup>
-        
-        
-        
-                    <thead>
-                      <tr>
-                        <th>근무기간</th>
-                        <th>회사명</th>
-                        <th>소재지</th>
-                        <th>직종</th>
-                        <th>연봉</th>
-                      </tr>
-                    </thead>
-        
-                    <tbody>
-                        
-                        <tr>
-                            <td >2020.12 ~ 재직중</td>
-                            <td>위즈메이드</td>
-                            <td>부산 금정구</td>
-                            <td>개발팀(팀원)</td>
-                            <td>2400(만)</td>
-                        </tr>
-                       
-                    </tbody>
-                </table>
-        
-        
-        
                 <div className="user_career_reason_2">
                     <ul className="user_career_reason_ul_2">
-                        <li>기술스택 : PHP, JAVA, SWIFT, HTML, CSS, JS(jquery) )</li>
+                    
                     
                         <li className="user_career_reason_li_2">
                            
         
                             <div className="user_career_reason_div_2">
+                                <div style={{width: "72%", display:"inline-block"}}>
                                 
-                                주로 스타트업의 외주 프로젝트를 받아 작업하였습니다.
-                                온라인 교육영상, 주차현황 조사 등 다양한 프로젝트를 수행하였습니다.
-        
-                            
-                            </div>
-        
-        
-                            <div className="user_career_reason_div_2">
                                 
-        
-                            
+                                    <div>
+                                    
+                                        <div className="skill_line">
+                                            <div>Frontend & Backend</div>
+                                            
+                                            <div>
+                                                <img src="img/html_css_js.png" style={{width:"200px", margin:"30px 0px 0px 0px"}} alt="skill" />
+                                            </div>
+                                            
+                                            <div>
+                                                <img src="img/php.png"  style={{width:"100px", verticalAlign:"super", margin:"0px 20px 0px 20px"}} alt="skill" />
+                                                <img src="img/nodejs.png"   style={{width:"100px"}}/>
+                                                <img src="img/typescript.png"   style={{width:"50px"}}/>
+                                            </div>
+                                            
+                                            <div>
+                                                <img src="img/react.png"  style={{width:"200px"}} alt="skill" />
+                                            </div>
+                                        </div>   
+                                        
+                                        <div className="skill_line">
+                                            <div>자격증</div>
+                                            
+                                            <div>
+                                                <img src="img/certifi.png"  style={{width:"100px", margin:"30px 0px 0px 0px"}} alt="skill" />
+                                                <span style={{position:"relative", top:"-27px"}}>정보처리기사</span>
+                                            </div>
+                                        </div>  
+                                    
+                                    </div>
+                                    
+                                    
+                                    
+                                    <div>
+                                    
+                                        <div className="skill_line">
+                                            <div>Version Control</div>
+                                            
+                                            <div>
+                                                <img src="img/git.png"  style={{width:"130px", margin:"30px 0px 0px 0px"}} alt="skill" />
+                                            </div>
+                                            
+                                            <div>
+                                                <img src="img/github.png"  style={{width:"170px", margin:"30px 0px 0px 0px"}} alt="skill" />
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="skill_line">
+                                            <div>deployment</div>
+                                            
+                                            <div>
+                                                <img src="img/aws.png"  style={{width:"170px", margin:"30px 0px 0px 0px"}} alt="skill" />
+                                            </div>
+                                        </div>
+                                        
+                                    
+                                    </div>
+                                    
+                                </div>
                             </div>
-        
+      
         
                         </li>
                     </ul>
@@ -422,63 +368,404 @@ class App extends React.Component {
         
         
         
-            <div className="user_certifi">
-        
-                <table className="user_certifi_info">
-        
-                    <colgroup>
-                        <col width="33%" />
-                        <col width="33%" />
-                        <col width="33%" />
-                    </colgroup>
-        
-                    <thead>
-                      <tr>
-                        <th>취득일</th>
-                        <th>자격증</th>
-                        <th>발행처</th>
-                      </tr>
-                    </thead>
-        
-                    <tbody>
-                        <tr>
-                            <td rowSpan="2">2020.11.12</td>
-                            <td>정보처리기사</td>
-                            <td>산업인력공단</td>
-                         
-                        </tr>
-                       
-                    </tbody>
-                </table>
         
         
-        
-        
-            </div>
+            <div className="portfolio_list vertical">
+                {/*
+                  <div>
+                    <button type="button" onClick={() => this.setState({ isOpen: true })}>
+                      Open Lightbox
+                    </button>
             
+                    {isOpen && (
+                      <Lightbox
+                        mainSrc={images[photoIndex]}
+                        nextSrc={images[(photoIndex + 1) % images.length]}
+                        prevSrc={images[(photoIndex + images.length - 1) % images.length]}
+                        onCloseRequest={() => this.setState({ isOpen: false })}
+                        onMovePrevRequest={() =>
+                          this.setState({
+                            photoIndex: (photoIndex + images.length - 1) % images.length,
+                          })
+                        }
+                        onMoveNextRequest={() =>
+                          this.setState({
+                            photoIndex: (photoIndex + 1) % images.length,
+                          })
+                        }
+                      />
+                    )}
+                  </div>
+                */}
+    
+    
+                    <div className="portfolio_block">
+                
+                
+                    <div className="slide_div">
+                        <Slider {...settings}>
+                            <div>
+                                <img src="/img/matchup/1.png" alt="slide_img" />
+                            </div>
+                            <div>
+                                <img src="/img/matchup/2.png" alt="slide_img" />
+                            </div>
+                            <div>
+                                <img src="/img/matchup/3.png" alt="slide_img" />
+                            </div>
+                        </Slider>
+                    </div>
+                    
+                    
+                    <div className="slide_exp_div">
+                    
+                        <div className="slide_exp_line">
+                            <div>
+                                <div className="slide_exp_title">프로젝트</div>
+                                <div className="slide_exp_word">매치업 랜딩페이지</div>
+                            </div>
+                            
+                            <div>
+                                <div className="slide_exp_title">URL</div>
+                                <div className="slide_exp_word">
+                                    <a href="https://www.match-up.co.kr/">https://www.match-up.co.kr/</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        
+                        
+                        <div className="slide_exp_line">
+                            <div>
+                                <div className="slide_exp_title">작업범위</div>
+                                <div className="slide_exp_word">PHP 백엔드, 프론트엔드(Jquery), 관리자 이미지 업로드 작업</div>
+                            </div>
+                        </div>
+                        
+                        
+                        <div className="slide_exp_line">
+                            <div>
+                                <div className="slide_exp_title">개발환경</div>
+                                <div className="slide_exp_word">cafe24 Server, PHP 7.4</div>
+                            </div>
+                        </div>
+                        
+                        
+                        <div className="slide_exp_line">
+                            <div>
+                                <div className="slide_exp_title">플랫폼 설명</div>
+                                <div className="slide_exp_word">
+                                
+                                    매치업 플랫폼을 홍보하는 랜딩 페이지를 작업했습니다.
+                                    
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                
+                </div>
+            
+      
+            
+                <div className="portfolio_block vertical">
+                
+                
+                    <div className="slide_div">
+                        <Slider {...settings}>
+                            <div>
+                                <img src="/img/go/1.png" alt="slide_img" />
+                            </div>
+                            <div>
+                                <img src="/img/go/2.png" alt="slide_img" />
+                            </div>
+                            <div>
+                                <img src="/img/go/3.png" alt="slide_img" />
+                            </div>
+                        </Slider>
+                    </div>
+                    
+                    
+                    <div className="slide_exp_div">
+                    
+                        <div className="slide_exp_line">
+                            <div>
+                                <div className="slide_exp_title">프로젝트</div>
+                                <div className="slide_exp_word">가자</div>
+                            </div>
+                            
+                            <div>
+                                <div className="slide_exp_title">URL</div>
+                                <div className="slide_exp_word">
+                                    <a href="https://softer084.cafe24.com">softer076.cafe24.com</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        
+                        <div className="slide_exp_line">
+                            <div>
+                                <div className="slide_exp_title">구글플레이 스토어</div>
+                                <div className="slide_exp_word">
+                                    현재 게시 취소됨
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="slide_exp_line">
+                            <div>
+                                <div className="slide_exp_title">앱 스토어</div>
+                                <div className="slide_exp_word">
+                                    현재 게시 취소됨
+                                </div>
+                            </div>
+                        </div>
+                        
+                        
+                        
+                        <div className="slide_exp_line">
+                            <div>
+                                <div className="slide_exp_title">작업범위</div>
+                                <div className="slide_exp_word">PHP 백엔드, 프론트엔드(Jquery), <br/>하이브리드앱 작업 및 배포( AOS, IOS )</div>
+                            </div>
+                        </div>
+                        
+                        
+                        <div className="slide_exp_line">
+                            <div>
+                                <div className="slide_exp_title">개발환경</div>
+                                <div className="slide_exp_word">cafe24 Server, PHP 7.4</div>
+                            </div>
+                        </div>
+                        
+                        
+                        <div className="slide_exp_line">
+                            <div>
+                                <div className="slide_exp_title">플랫폼 설명</div>
+                                <div className="slide_exp_word">
+                                
+                                    플랫폼에 등록된 상점을 들려 이용시 쿠폰과 스탬프를 지급하여
+                                    사용 할 수 있게 해주는 앱입니다.
+                                    
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                
+                </div>
+            
+            
+            
+                <div className="portfolio_block horizontal" style={{display:"block"}}>
+                
+                
+                    <div className="slide_div" style={{width:"100%"}}>
+                        <Slider {...settings}>
+                            <div>
+                                <img src="/img/kanta/1.png" alt="slide_img" />
+                            </div>
+                            <div>
+                                <img src="/img/kanta/2.png" alt="slide_img" />
+                            </div>
+                            <div>
+                                <img src="/img/kanta/3.png" alt="slide_img" />
+                            </div>
+                            <div>
+                                <img src="/img/kanta/4.png" alt="slide_img" />
+                            </div>
+                            <div>
+                                <img src="/img/kanta/5.png" alt="slide_img" />
+                            </div>
+                       
+                        </Slider>
+                    </div>
+                    
+                    
+                    <div className="slide_exp_div">
+                    
+                        <div className="slide_exp_line">
+                            <div>
+                                <div className="slide_exp_title">프로젝트</div>
+                                <div className="slide_exp_word">칸타수학<br/>(교육영상 플랫폼)</div>
+                            </div>
+                            
+                            <div>
+                                <div className="slide_exp_title">URL</div>
+                                <div className="slide_exp_word">
+                                    <a href="https://softer084.cafe24.com">softer084.cafe24.com</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="slide_exp_line">
+                            <div>
+                                <div className="slide_exp_title">구글플레이 스토어</div>
+                                <div className="slide_exp_word">
+                                    <a href="https://play.google.com/store/apps/details?id=com.wizmade.kanta">칸타수학 플레이스토어 바로가기</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        
+                        <div className="slide_exp_line">
+                            <div>
+                                <div className="slide_exp_title">작업범위</div>
+                                <div className="slide_exp_word">PHP 백엔드, 프론트엔드(Jquery), <br/>하이브리드앱 작업 및 배포( AOS )</div>
+                            </div>
+                        </div>
+                        
+                        
+                        <div className="slide_exp_line">
+                            <div>
+                                <div className="slide_exp_title">개발환경</div>
+                                <div className="slide_exp_word">AWS S3, cafe24 Server, PHP 7.4</div>
+                            </div>
+                        </div>
+                        
+                        
+                        <div className="slide_exp_line">
+                            <div>
+                                <div className="slide_exp_title">플랫폼 설명</div>
+                                <div className="slide_exp_word">
+                                
+                                    강의영상과 시험문제를 온라인으로 학생들에게 제공하여
+                                    학습 효율을 높이는 플랫폼입니다.
+                                    
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                
+                </div>
+               
+               
+                <div className="portfolio_block vertical">
+                
+                
+                    <div className="slide_div">
+                        <Slider {...settings}>
+                            <div>
+                                <img src="/img/park/1.png" alt="slide_img" />
+                            </div>
+                            <div>
+                                <img src="/img/park/2.png" alt="slide_img" />
+                            </div>
+                            <div>
+                                <img src="/img/park/3.png" alt="slide_img" />
+                            </div>
+                            <div>
+                                <img src="/img/park/4.png" alt="slide_img" />
+                            </div>
+                            <div>
+                                <img src="/img/park/5.png" alt="slide_img" />
+                            </div>
+                         
+                        </Slider>
+                    </div>
+                    
+                    
+                    <div className="slide_exp_div">
+                    
+                        <div className="slide_exp_line">
+                            <div>
+                                <div className="slide_exp_title">프로젝트</div>
+                                <div className="slide_exp_word">주차실태조사<br/>(주차현황 조사 플랫폼)</div>
+                            </div>
+                            
+                            <div>
+                                <div className="slide_exp_title">URL</div>
+                                <div className="slide_exp_word">
+                                    <a href="https://softer093.cafe24.com">softer093.cafe24.com</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="slide_exp_line">
+                            <div>
+                                <div className="slide_exp_title">구글플레이 스토어</div>
+                                <div className="slide_exp_word">
+                                    <a href="https://play.google.com/store/apps/details?id=com.wizmade.parkingsys">주차실태조사 플레이스토어 바로가기</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="slide_exp_line">
+                            <div>
+                                <div className="slide_exp_title">앱 스토어</div>
+                                <div className="slide_exp_word">
+                                    <a href="https://apps.apple.com/us/app/%EC%A3%BC%EC%B0%A8%EC%8B%A4%ED%83%9C%EC%A1%B0%EC%82%AC/id1582133805">주차실태조사 앱스토어 바로가기</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="slide_exp_line">
+                            <div>
+                                <div className="slide_exp_title">작업범위</div>
+                                <div className="slide_exp_word">PHP 백엔드, 프론트엔드(Jquery), <br/>하이브리드앱 작업 및 배포( IOS, AOS )</div>
+                            </div>
+                        </div>
+                        
+                        
+                        <div className="slide_exp_line">
+                            <div>
+                                <div className="slide_exp_title">개발환경</div>
+                                <div className="slide_exp_word">AWS S3, AWS RDS, cafe24 Server, PHP 7.4</div>
+                            </div>
+                        </div>
+                        
+                        
+                        <div className="slide_exp_line">
+                            <div>
+                                <div className="slide_exp_title">플랫폼 설명</div>
+                                <div className="slide_exp_word">
+                                
+                                     서울시 주차현황을 조사하는 플랫폼입니다.
+                                    
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                
+                </div>
+
+            </div>
+        
+        
+        
+        
+        
+
             
         
 
 
             <div className="chat">
-        
+                {/*
                 <div className="chat_num_div">
-                    <span>현재 접속자 수 : </span>
+                    <span>현재 접속자 수 : {this.state.chat_num}</span>
                     <span className="chat_num"></span>
                 </div>
-        
+                */}
         
                 <div className="chat_space">
                     <ul className="chat_space_ul">
                     
-                        {chat_html()}
+                        {
+                            chat_init(this.state.rows)
+                            
+                            
+                        }
         
                     </ul>
                     
                 </div>
         
         
-                <div className="chat_div">
+                <div className="chat_div" >
                     <input type='text' className="chat_text" onKeyUp={this.sendenterMsg} />
                     <input type='button' className="send_button" onClick={this.sendMsg} value="send"/>
                 </div>
